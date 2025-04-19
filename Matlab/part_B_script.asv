@@ -1,0 +1,179 @@
+% --- Task B2: --- 
+%   Objective: Develop A Matlab script to use Mesh analysis and Cramers Rule
+% to Solve for the specified Circuit mesh values  
+
+% - Display Circuit -
+
+%   Upload png to left of dialog boxes to provide visual guide for users
+% when entering componenet values in dialog boxes
+fig = figure('Name', 'Circuit Figure,');
+imshow('Part_B_Circuit_Diagram.png');
+title('Tri Mesh Circuit Diagram')
+
+% input dialog box prompts
+prompt = { ...
+    'Enter value for V1 (in Volts):', ...
+    'Enter value for V2 (in Volts):' ...    
+    'Enter value for R1 (in Ohms):', ...
+    'Enter value for R2 (in Ohms):', ...
+    'Enter value for R3 (in Ohms):', ...
+    'Enter value for R4 (in Ohms):', ...
+    'Enter value for R5 (in Ohms):', ...
+};
+% input dialog box titles
+dlg_title = 'Enter Circuit Component Values';
+% height, width of input fields
+num_lines = [1 40];
+% default componenet values
+default_values = {'1', '1', '1', '1', '1', '1', '1'};
+% sellect options interpreter texs
+options.Interpreter = 'tex';
+
+% create array consisting of each inptued componenet values
+user_inputs = inputdlg(prompt, dlg_title, num_lines, default_values, options);
+
+for input = 0:7 
+    try 
+        user_inouts(input) 
+    end
+end
+
+% Set componenet values as the user inputs of dlg box
+V1 = str2double(user_inputs{1});
+V2 = str2double(user_inputs{2});
+V3 = 0;
+R1 = str2double(user_inputs{3});
+R2 = str2double(user_inputs{4});
+R3 = str2double(user_inputs{5});
+R4 = str2double(user_inputs{6});
+R5 = str2double(user_inputs{7});
+
+% create a list with voltage values
+mesh_voltages = [V1, V2, V3];
+
+%construct a function to find a minor 
+function [minor] = find_minor(matrix, row, column) 
+    minor_matrix = matrix; % set varaible for minor matrix as copy of original matrix        
+    minor_matrix(row,:) = []; % remove row of element from matrix (replaces each element in row with empty element)
+    minor_matrix(:,column) = []; % remove column of element from matrix (replaces each element in column with empty element)
+    % calculate minor of new array using equation for minor
+    minor = minor_matrix(1,1)* minor_matrix(2,2) - minor_matrix(1,2)* minor_matrix(2,1);
+end
+
+% find determinate using cofactor technique
+% create 3 2x2 matrixes with 3 minors and determinates
+function [det] = determinate(matrix)  % find determinate using elements in top row
+    det = 0; % set initial determinate value as 0,
+    for I = 1:3 % for each top row element of array 
+
+        % use find_minor function to find the minor of top three elements
+        % of matrix, multiply that number by cofactor = -1^(I+1) where I
+        % cycles from 2 to 4
+        % det =+ matrix(1,I) * find_minor(matrix, matrix(1,I)) * cofactor
+
+        cofactor = (-1)^(I+1); % Cofactor variable,
+        element = matrix(1,I); % Element variable
+        minor = find_minor(matrix, 1, I); % use find minor function to find minor of top row elements
+        det = det + (element * cofactor * minor); % multiply and increment determiante
+    end
+end
+
+% Create new matrix of strings for Mesh matrix display
+A_str = "R1 + R2";
+B_str = "-R1";
+C_str = "-R2";
+D_str = "R1";
+E_str = "R1 + R4 + R3";
+F_str = "-R3";
+G_str = "-R2";
+H_str = "-R3";
+I_str = "R2 + R3 + R5";
+
+% assign elemenent values based on mesh analysis and component values
+A = R1 + R2;
+B = -R1;
+C = -R2;
+D = R1;
+E = R1 + R4 + R3;
+F = -R3;
+G = -R2;
+H = -R3;
+I = R2 + R3 + R5;
+
+% -- Displaying equations and Mesh Branch Calculations
+% Construct matrix seperate columns with space and rows with semicolon
+matrix1 = [A D G; B E H; C F I];
+
+% Construct matrix with string equations for displaying
+matrix1_str =  [A_str D_str G_str; B_str E_str H_str; C_str F_str I_str];
+
+
+% Displaying equations
+% display mesh 1
+fprintf("\nMesh 1: \n");
+disp ("V1 = R1(i1 - i2) + V2 + R2(i1 - i3) + V2")
+disp ("V1 - V2 = i1(R1 + R2) + i2(R1) + i3(-R2)")
+
+% display mesh 2
+fprintf ("\nMesh 2: \n");
+disp ("0 = R1(i2 - i1) + R4(i1 - i3) + R3(i2 - i3)")
+disp ("0 = i1(-R1) + i2(R1 + R4 + R3) i3(-R3) ")
+
+% display mesh 3
+fprintf ("\nMesh 3: \n");
+disp ("V2 = R3(i3 - i2) + R5(i3) + R2(i3 - i1)")
+disp ("V2 = i1(-R2 + i2 (-R3) + i3(R3 + R5 + R2)")
+
+% Display matrix with equations in command window 
+fprintf("\nmesh matrix with equations: \n")
+disp(matrix1_str);
+
+% Display matrix in command window 
+disp("matrix with values:")
+disp (matrix1);
+
+% Display determiante in command window
+disp("determinate:")
+disp (determinate(matrix1));
+
+% create function to calculate branch currents
+function [Current] = Branch_Current_Calculation(matrix, Voltages)
+    % Set starting I values so a Current list can be initialized with them
+    I1 = 0;
+    I2 = 0;
+    I3 = 0;
+    Current = [I1,I2,I3]; 
+    %mesh_voltage = [V1, V2, V3];
+    %set charicteristic determiante;
+    char_det = determinate(matrix);
+    disp(char_det);
+
+    for I = 1:3 % loop 3 times for each i value and element in row
+
+        % use find_minor function to find the minor of top three elements
+        % of matrix, multiply that number by cofactor = -1^(I+1) where I
+        % cycles from 2 to 4
+        % det =+ matrix(1,I) * find_minor(matrix, matrix(1,I)) * cofactor
+
+        cofactor = (-1)^(I+1); % Cofactor variable
+        element = matrix(1,I); % Element variable
+        minor = find_minor(matrix, 1, I); % use find minor function to find minor of top row elements
+        % disp([minor, cofactor, char_det]);
+        
+        % Calculate the current by multiplying voltage of current mesh by
+        % the minor and cofactor, then divide by the determinate
+        Current(I) = (Voltages(I) * minor * cofactor) / (char_det); % use equation for I
+
+        % display calculation 
+        disp()
+    end
+
+end
+
+% assign calculated Current values to array
+I_values1 = Branch_Current_Calculation(matrix1, mesh_voltages);
+
+for I = 1:3 % loop 3 times to print each current vallues
+    fprintf('Mesh %d Current Value: %f Amps \n', I, I_values1(I)); %print current value
+end
+
